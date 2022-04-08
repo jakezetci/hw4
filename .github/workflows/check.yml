@@ -1,0 +1,32 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: MixFit
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: Check mixfit.py
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install requirements
+      run: pip install -r requirements.txt
+    - name: Try test.py
+      run: |
+        python -m unittest
+    - name: Try per.py
+      run: |
+        rm -f ./per.png
+        rm -f ./per.json
+        python per.py
+    - name: Check per.png
+      run: test -e ./per.png
+    - name: Check per.json
+      run: test -e ./per.json
