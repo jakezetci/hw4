@@ -58,11 +58,9 @@ def max_likelihood(x, tau, mu1, sigma1, mu2, sigma2, rtol=1e-3):
                 T1-np.log(1-tau))/(1-tau) - np.sum(
             T1*log_p(x, mu2, sigma2)) / (1-tau)
         dmu1 = np.sum(T0 * 1/sigma1**2 * (x-mu1))
-        dsigma1 = np.sum(T0 * (- 1/sigma1 + 1/(sigma1**3) * log_p(
-            x, mu1, sigma1)))
+        dsigma1 = np.sum(T0 * (- 1/sigma1 + 1/(sigma1**3) * (x-mu1)**2))
         dmu2 = np.sum(T1 * 1/sigma2**2 * (x - mu2))
-        dsigma2 = np.sum(T1 * (- 1/sigma2 + 1/(sigma2**3) * log_p(
-            x, mu2, sigma2)))
+        dsigma2 = np.sum(T1 * (- 1/sigma2 + 1/(sigma2**3) * (x-mu2)**2))
         return np.asarray([dtau, dmu1, dsigma1, dmu2, dsigma2])
     th0 = (tau, mu1, sigma1, mu2, sigma2)
     bds = Bounds(0, 1)
