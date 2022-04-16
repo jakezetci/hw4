@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.optimize import minimize, Bounds
 
+
 def max_likelihood(x, tau, mu1, sigma1, mu2, sigma2, rtol=1e-3):
     """
 
@@ -18,63 +19,90 @@ def max_likelihood(x, tau, mu1, sigma1, mu2, sigma2, rtol=1e-3):
         None.
 
     """
-    def p(x, mu, sigma):  # per one x
-        a = np.exp(-(x-mu)**2/(2*sigma**2))
-        return a*(np.pi)**(1/2)/sigma
+
+    def p(x, mu, sigma):
+        a = np.exp(-(x-mu)**2/(sigma**2))
+        return a / ((2 * np.pi)**(1/2) * (sigma**2))
 
     def log_p(x, mu, sigma):
         return -(1/2)*(np.log(sigma**2)+1/sigma**2 * (x-mu)**2)
 
-    def t(x, tau, mu1, mu2, sigma12, sigma22):
+    def t(x, tau, mu1, sigma1, mu2, sigma22):
         tau0 = tau
         tau1 = 1 - tau0
-        
-        T0 =(tau0/ np.sqrt(2*np.pi*sigma12))* np.exp(-0.5*(x-mu1)**2/sigma12)
-        T1 =(tau1/ np.sqrt(2*np.pi*sigma22))* np.exp(-0.5*(x-mu2)**2/sigma22)
-        
-        T_sum = T1 +T0
-        T0 = np.divide(T0, T_sum, out = np.full_like(T0, 0.5), where=T_sum!=0.0)
-        T1 = np.divide(T1, T_sum, out = np.full_like(T1, 0.5), where=T_sum!=0.0)
+
+        T0 = (tau0 / np.sqrt(2 * np.pi * sigma1**2)) * np.exp(
+            -0.5 * (x - mu1)**2 / sigma1**2)
+        T1 = (tau1 / np.sqrt(2 * np.pi * sigma2**2)) * np.exp(
+            -0.5 * (x - mu2)**2 / sigma2**2)
+
+        T_sum = T1 + T0
+        T0 = np.divide(T0, T_sum, out=np.full_like(T0, 0.5),
+                       where=T_sum != 0.0)
+        T1 = np.divide(T1, T_sum, out=np.full_like(T1, 0.5),
+                       where=T_sum != 0.0)
         return T0, T1
 
     def L_to_minimize(th, x):
         tau, mu1, sigma1, mu2, sigma2 = th
-        th1 = (tau, mu1, sigma1)
-        th2 = (1 - tau, mu2, sigma2)
+        th1 = (mu1, sigma1)
+        th2 = (mu2, sigma2)
         T0, T1 = t(x, *th)
-        L1 = np.sum(T0 * np.log(tau)) + np.sum(
-            T0*log_p(x, mu1, sigma1))
-        L2 = np.sum(T0 * np.log(1 - tau)) + np.sum(
-            T1 *log_p(x, mu2, sigma2))
-        return -L1-L2
-    
-    def jac_L(th, x):
-        tau, mu1, sigma1, mu2, sigma2 = th
-        th1 = (tau, mu1, sigma1)
-        th2 = (1 - tau, mu2, sigma2)
-        T0, T1 = t(x, *th)
-        dtau = np.sum(T0 * (1/tau + np.log(tau)/tau)) + np.sum(
-            T0 * log_p(x, mu1, sigma1) / tau) - np.sum(
-                T1-np.log(1-tau))/(1-tau) - np.sum(
-            T1*log_p(x, mu2, sigma2)) / (1-tau)
-        dmu1 = np.sum(T0 * 1/sigma1**2 * (x-mu1))
-        dsigma1 = np.sum(T0 * (- 1/sigma1 + 1/(sigma1**3) * (x-mu1)**2))
-        dmu2 = np.sum(T1 * 1/sigma2**2 * (x - mu2))
-        dsigma2 = np.sum(T1 * (- 1/sigma2 + 1/(sigma2**3) * (x-mu2)**2))
-        return np.asarray([dtau, dmu1, dsigma1, dmu2, dsigma2])
+        L1 = np.sum(-np.log(T0 * p(x, *th1) + T1 * p(x, *th2)))
+        return L1
+
+    def L_jac(th, x):
+        pass
+
+    N = x.shape[0]
     th0 = (tau, mu1, sigma1, mu2, sigma2)
     bds = Bounds(0, 1)
     result = minimize(L_to_minimize, th0, args=(x),
-                      jac=jac_L, tol=rtol, bounds=bds)
-    return result
-    
+                      tol=rtol, bounds=bds)
+    return result.x
+
 
 def em_double_gauss(x, tau, mu1, sigma1, mu2, sigma2, rtol=1e-3):
-    pass
+    def t(x, tau, mu1, mu2, sigma12, sigma22):
+        tau0 = tau
+        tau1 = 1 - tau0
+
+        T0 = (tau0 / np.sqrt(2 * np.pi * sigma12)) * np.exp(
+            -0.5 * (x-mu1)**2/sigma12)
+        T1 = (tau1 / np.sqrt(2 * np.pi * sigma22)) * np.exp(
+            -0.5 * (x-mu2)**2/sigma22)
+
+        T_sum = T1 + T0
+        T0 = np.divide(T0, T_sum, out=np.full_like(T0, 0.5),
+                       where=T_sum != 0.0)
+        T1 = np.divide(T1, T_sum, out=np.full_like(T1, 0.5),
+                       where=T_sum != 0.0)
+        return T0, T1
+
+    def tht(x, tau, mu, mu2, sigma1, sigma2):
+        t0, t1 = t(x, tau, mu1, mu2, sigma1, sigma2)
+        t0_sum = np.sum(t0)
+        t1_sum = np.sum(t1)
+        tau_new = t0_sum / np.shape(x)[0]
+        mu1_new = np.sum(t0*x) / t0_sum
+        mu2_new = np.sum(t1*x) / t1_sum
+        sigma1_new = np.sum(t0 * (x-mu1_new)**2) / t0_sum
+        sigma2_new = np.sum(t1 * (x-mu2_new)**2) / t1_sum
+        return (tau_new, mu1_new, mu2_new, sigma1_new, sigma2_new)
+
+    th = (tau, mu1, mu2, sigma1, sigma2)
+    theta = tht(x, *th)
+    for i in range(int(1e3)):
+        th_new = tht(x, *th)
+        if np.linalg.norm(np.asarray(th_new)-np.asarray(th)) < rtol:
+            break
+        theta = th_new
+    return theta
 
 
-def em_double_cluster(x, tau1, tau2, muv, mu1, mu2, sigma02, sigmax2, sigmav2, rtol=1e-5):
-    pass
+def em_double_cluster(x, tau1, tau2, muv, mu1, mu2, sigma02,
+                      sigmax2, sigmav2, rtol=1e-5):
+    
 
 
 if __name__ == "__main__":
