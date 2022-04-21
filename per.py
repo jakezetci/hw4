@@ -78,14 +78,17 @@ if __name__ == "__main__":
     '''Время джейсона'''
 
     dictionary = {
-        "size_ratio": param['tau1']/param['tau2'],
-        "motion": {"ra": param['muv'][0], "dec": param['muv'][1]},
+        "size_ratio": np.round(param['tau1']/param['tau2'], decimals=2),
+        "motion": {"ra": np.round(param['muv'][0], decimals=2),
+                   "dec": np.round(param['muv'][1], decimals=2)},
         "clusters": [
             {
-                "center": {"ra": param['mu1'][0], "dec": param['mu1'][1]},
+                "center": {"ra": np.round(param['mu1'][0], decimals=2),
+                           "dec": np.round(param['mu1'][1], decimals=2)},
                 },
             {
-                "center": {"ra": param['mu2'][0], "dec": param['mu2'][1]},
+                "center": {"ra": np.round(param['mu2'][0], decimals=2),
+                           "dec": np.round(param['mu2'][1], decimals=2)},
                 }
             ]
         }
