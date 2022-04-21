@@ -78,7 +78,7 @@ if __name__ == "__main__":
     '''Время джейсона'''
 
     dictionary = {
-        "size_ratio": param['tau1'] + param['tau2'],
+        "size_ratio": param['tau1']/param['tau2'],
         "motion": {"ra": param['muv'][0], "dec": param['muv'][1]},
         "clusters": [
             {
