@@ -177,7 +177,7 @@ def em_double_cluster(x, tau1, tau2, muv, mu1, mu2, sigma02,
             mu = np.broadcast_to(mu, (n, p))
             sigmavec = [1/a for a in np.diag(sigma)]
             L1 = (np.log(tau) - 0.5 * np.log(
-                np.prod(sigmavec, where=np.nonzero(sigmavec))) -
+                np.prod(sigmavec, where=[sigmavec!=0])) -
                 1/2 * np.sum((x-mu) * ((x-mu) @ np.diag(sigmavec)), axis=1))
             return L1
         T1, T2, T3 = T(x, *theta)
@@ -212,7 +212,7 @@ def T(x, tau1, tau2, muv, mu1, mu2, sigma02, sigmax2, sigmav2):
         sigmavec = [1/a for a in np.diag(sigma)]
         exp = np.exp(-1/2 * np.sum((x-mu) * ((x-mu) @ np.diag(sigmavec)),
                                    axis=1))
-        return (exp * (np.prod(sigmavec, where=np.nonzero(sigmavec))**1/2) /
+        return (exp * (np.prod(sigmavec, where=[sigmavec !=0 ])**1/2) /
                 ((2 * np.pi)**(1/4)))
 
     def p_normal_2d(x, mu, sigma):
@@ -223,7 +223,7 @@ def T(x, tau1, tau2, muv, mu1, mu2, sigma02, sigmax2, sigmav2):
         sigmavec = [1/a for a in np.diag(sigma)]
         exp = np.exp(-1/2 * np.sum((x-mu) * ((x-mu) @ np.diag(sigmavec)),
                                    axis=1))
-        return (exp * (np.prod(sigmavec, where=np.nonzero(sigmavec))**1/2) /
+        return (exp * (np.prod(sigmavec, where=[sigmavec!=0])**1/2) /
                 ((2 * np.pi)**(1/2)))
 
     sigma = np.diag(np.array([sigmax2, sigmav2]).flat)

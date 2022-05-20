@@ -4,6 +4,7 @@ from scipy.stats import multivariate_normal
 import unittest
 from scipy.stats import uniform
 
+
 class MixFitTest(unittest.TestCase):
     def test_normal(self):
         tau = 0.2
@@ -21,10 +22,10 @@ class MixFitTest(unittest.TestCase):
         sigma1_init = 0.04
         sigma2_init = 0.04
         theta0 = (tau_init, mu1_init,
-                 sigma1_init, mu2_init, sigma2_init)
+                  sigma1_init, mu2_init, sigma2_init)
         theta = (tau, mu1, sigma1, mu2, sigma2)
         return x, theta0, theta
-    
+
     def test_4d(self):
         tau1 = 0.2
         tau2 = 0.15
@@ -37,17 +38,24 @@ class MixFitTest(unittest.TestCase):
         sigmax2 = [0.088, 0.088]
         theta = (tau1, tau2, tau3, muv, mu1, mu2, sigma02, sigmax2, sigmav2)
         theta0 = (0.2, 0.3, [-10, -2], [34.85, 57.17], [35.3, 57.17],
-              [0, 0, 0.5, 0.5], [0.5, 0.5], [0.5, 0.5])
+                  [0, 0, 0.5, 0.5], [0.5, 0.5], [0.5, 0.5])
         N = 5000
-        x1 = multivariate_normal(mean=np.asarray([mu1, muv]).flat,
-                                 cov=np.asarray([sigmax2, sigmav2]).flat).rvs(size=int(N*tau1))
+        x1 = multivariate_normal(mean=np.asarray([mu1,
+                                                  muv]).flat,
+                                 cov=np.asarray([sigmax2,
+                                                 sigmav2]).flat).rvs(
+                                                     size=int(N*tau1))
         x2 = multivariate_normal(mean=np.asarray([mu2, muv]).flat,
-                                 cov=np.asarray([sigmax2, sigmav2]).flat).rvs(size=int(N*tau2))
+                                 cov=np.asarray([sigmax2,
+                                                 sigmav2]).flat).rvs(
+                                                     size=int(N*tau2))
 
         x3 = uniform.rvs(loc=35.2, scale=0.5, size=int(N*tau3))
         x4 = uniform.rvs(loc=57.1, scale=0.5, size=int(N*tau3))
-        v3 = multivariate_normal(mean=0, cov=sigma02[2]).rvs(size=(int(N*tau3)))
-        v4 = multivariate_normal(mean=0, cov=sigma02[3]).rvs(size=(int(N*tau3)))
+        v3 = multivariate_normal(mean=0,
+                                 cov=sigma02[2]).rvs(size=(int(N*tau3)))
+        v4 = multivariate_normal(mean=0,
+                                 cov=sigma02[3]).rvs(size=(int(N*tau3)))
         x3 = np.vstack([x3, x4, v3, v4]).T
         x = np.concatenate([x1, x2, x3])
         return x, theta, theta0
@@ -60,7 +68,7 @@ class MixFitTest(unittest.TestCase):
     def test_em_double_gauss(self):
         x, theta0, theta = self.test_normal()
         result = em_double_gauss(x, *theta0)
-        
+
         self.assertTrue(np.allclose(result, theta, atol=0.01))
 
     def test_em_double_cluster(self):
@@ -70,6 +78,7 @@ class MixFitTest(unittest.TestCase):
         print(theta)
         for i, param in enumerate(result):
             self.assertTrue(np.allclose(param, theta[i], atol=1e-2))
+
 
 if __name__ == '__main__':
     unittest.main()
